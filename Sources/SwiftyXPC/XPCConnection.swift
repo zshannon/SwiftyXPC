@@ -17,7 +17,7 @@ public class XPCConnection: @unchecked Sendable {
         /// An XPC message was missing its request and/or response body.
         case missingMessageBody
         /// Received an unhandled XPC message.
-        case unexpectedMessage
+        case unexpectedMessage(String)
         /// A message contained data of the wrong type.
         case typeMismatch(expected: XPCType, actual: XPCType)
         /// Only used on macOS versions prior to 12.0.
@@ -519,7 +519,7 @@ public class XPCConnection: @unchecked Sendable {
                 }
 
                 guard let _messageHandler = self.getMessageHandler(forName: name) else {
-                    throw Error.unexpectedMessage
+                    throw Error.unexpectedMessage(name)
                 }
 
                 messageHandler = _messageHandler
