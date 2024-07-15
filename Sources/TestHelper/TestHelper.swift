@@ -36,9 +36,7 @@ class XPCService {
                 connectionCount
             })
 
-            Task {
-                try await listener.activate()
-            }
+            listener.activate()
             dispatchMain()
         } catch {
             fatalError("Error while setting up XPC service: \(error)")
