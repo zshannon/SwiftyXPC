@@ -146,7 +146,9 @@ final class SwiftyXPCTests: XCTestCase {
             }
         }
 
-        listener.activate()
+        Task {
+            try await listener.activate()
+        }
         do {
             try await conn.sendMessage(name: CommandSet.tellAJoke, request: listener.endpoint)
         } catch {
@@ -178,7 +180,9 @@ final class SwiftyXPCTests: XCTestCase {
             }
         }
 
-        listener.activate()
+        Task {
+            try await listener.activate()
+        }
 
         let failsToSendInvalidJoke = self.expectation(description: "Fails to send non-knock-knock joke")
 

@@ -13,7 +13,7 @@ import TestShared
 @main
 @available(macOS 13.0, *)
 class XPCService {
-    static func main() {
+    static func main() async throws {
         do {
             let xpcService = XPCService()
 
@@ -36,7 +36,9 @@ class XPCService {
                 connectionCount
             })
 
-            listener.activate()
+            Task {
+                try await listener.activate()
+            }
             dispatchMain()
         } catch {
             fatalError("Error while setting up XPC service: \(error)")
