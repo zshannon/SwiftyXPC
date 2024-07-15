@@ -257,7 +257,7 @@ public final class XPCListener {
     /// Activate the connection.
     ///
     /// Listeners start in an inactive state, so you must call `activate()` on a connection before it will send or receive any messages.
-    public func activate() async throws {
+    public func activate() {
         switch self.backing {
         case .xpcMain:
             xpc_main {
@@ -278,7 +278,7 @@ public final class XPCListener {
                 }
             }
         case .connection(let connection, _):
-            try await connection.activate()
+            connection.activate()
         }
     }
 
