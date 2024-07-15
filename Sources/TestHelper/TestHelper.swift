@@ -19,12 +19,22 @@ class XPCService {
 
             let listener = try XPCListener(type: .machService(name: helperID), codeSigningRequirement: nil)
 
+            var connectionCount: Int = 0
+            listener.activatedConnectionHandler = { _ in
+                connectionCount += 1
+            }
+            listener.canceledConnectionHandler = { _ in
+                connectionCount -= 1
+            }
             listener.setMessageHandler(name: CommandSet.reportIDs, handler: xpcService.reportIDs)
             listener.setMessageHandler(name: CommandSet.capitalizeString, handler: xpcService.capitalizeString)
             listener.setMessageHandler(name: CommandSet.multiplyBy5, handler: xpcService.multiplyBy5)
             listener.setMessageHandler(name: CommandSet.transportData, handler: xpcService.transportData)
             listener.setMessageHandler(name: CommandSet.tellAJoke, handler: xpcService.tellAJoke)
             listener.setMessageHandler(name: CommandSet.pauseOneSecond, handler: xpcService.pauseOneSecond)
+            listener.setMessageHandler(name: CommandSet.countConnections, handler: { _ in
+                connectionCount
+            })
 
             listener.activate()
             dispatchMain()
@@ -70,7 +80,7 @@ class XPCService {
             codeSigningRequirement: nil
         )
 
-        remoteConnection.activate()
+        try await remoteConnection.activate()
 
         let opening: String = try await remoteConnection.sendMessage(name: JokeMessage.askForJoke, request: "Tell me a joke")
 

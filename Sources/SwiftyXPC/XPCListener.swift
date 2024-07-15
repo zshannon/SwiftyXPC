@@ -169,6 +169,14 @@ public final class XPCListener {
             }
         }
     }
+    
+    /// A handler that will be called when a new connection activates.
+    public typealias ActivatedConnectionHandler = (XPCConnection) -> Void
+    public var activatedConnectionHandler: ActivatedConnectionHandler? = nil
+    
+    /// A handler that will be called when a connection cancels.
+    public typealias CanceledConnectionHandler = (XPCConnection) -> Void
+    public var canceledConnectionHandler: CanceledConnectionHandler? = nil
 
     /// Create a new `XPCListener`.
     ///
@@ -219,8 +227,13 @@ public final class XPCListener {
 
                     newConnection.messageHandlers = self?.messageHandlers ?? [:]
                     newConnection.errorHandler = self?.errorHandler
+                    newConnection.cancelHandler = {
+                        self?.canceledConnectionHandler?(newConnection)
+                    }
 
                     newConnection.activate()
+                    
+                    self?.activatedConnectionHandler?(newConnection)
                 } catch {
                     self?.errorHandler?(connection, error)
                 }
@@ -232,12 +245,12 @@ public final class XPCListener {
     ///
     /// After this call, any messages that have not yet been sent will be discarded, and the connection will be unwound.
     /// If there are messages that are awaiting replies, they will receive the `XPCError.connectionInvalid` error.
-    public func cancel() {
+    public func cancel() async throws {
         switch self.backing {
         case .xpcMain:
             fatalError("XPC service listener cannot be cancelled")
         case .connection(let connection, _):
-            connection.cancel()
+            try await connection.cancel()
         }
     }
 

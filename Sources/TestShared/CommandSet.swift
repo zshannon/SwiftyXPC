@@ -13,4 +13,5 @@ public struct CommandSet {
     public static let transportData = "com.charlessoft.SwiftyXPC.Tests.TransportData"
     public static let tellAJoke = "com.charlessoft.SwiftyXPC.Tests.TellAJoke"
     public static let pauseOneSecond = "com.charlessoft.SwiftyXPC.Tests.PauseOneSecond"
+    public static let countConnections = "com.charlessoft.SwiftyXPC.Tests.CountConnections"
 }
