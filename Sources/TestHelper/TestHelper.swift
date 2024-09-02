@@ -12,8 +12,8 @@ import TestShared
 
 @main
 @available(macOS 13.0, *)
-class XPCService {
-    static func main() async throws {
+final class XPCService: Sendable {
+    static func main() {
         do {
             let xpcService = XPCService()
 
@@ -32,9 +32,11 @@ class XPCService {
             listener.setMessageHandler(name: CommandSet.transportData, handler: xpcService.transportData)
             listener.setMessageHandler(name: CommandSet.tellAJoke, handler: xpcService.tellAJoke)
             listener.setMessageHandler(name: CommandSet.pauseOneSecond, handler: xpcService.pauseOneSecond)
-            listener.setMessageHandler(name: CommandSet.countConnections, handler: { _ in
-                connectionCount
-            })
+            listener.setMessageHandler(
+                name: CommandSet.countConnections,
+                handler: { _ in
+                    connectionCount
+                })
 
             listener.activate()
             dispatchMain()
@@ -69,7 +71,7 @@ class XPCService {
                 "Noonien Soong".data(using: .utf8)!,
                 "Arik Soong".data(using: .utf8)!,
                 "Altan Soong".data(using: .utf8)!,
-                "Adam Soong".data(using: .utf8)!
+                "Adam Soong".data(using: .utf8)!,
             ]
         )
     }
