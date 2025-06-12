@@ -46,7 +46,7 @@ public class XPCConnection: @unchecked Sendable {
     }
 
     /// A handler that will be called if a communication error occurs.
-    public typealias ErrorHandler = (XPCConnection, Swift.Error) -> Void
+    public typealias ErrorHandler = (XPCConnection, Swift.Error) async -> Void
 
     /// A handler that will be called when the connection is cancelled.
     public typealias CancelHandler = () async -> Void
@@ -459,7 +459,9 @@ public class XPCConnection: @unchecked Sendable {
             do {
                 try self.checkCallerCredentials(event: event)
             } catch {
-                self.errorHandler?(self, error)
+                Task {
+                    await self.errorHandler?(self, error)
+                }
                 return
             }
         }
@@ -483,7 +485,9 @@ public class XPCConnection: @unchecked Sendable {
                 throw Error.typeMismatch(expected: .dictionary, actual: event.type)
             }
         } catch {
-            self.errorHandler?(self, error)
+            Task {
+                await self.errorHandler?(self, error)
+            }
             return
         }
     }
@@ -557,7 +561,7 @@ public class XPCConnection: @unchecked Sendable {
 
                 messageHandler = _messageHandler
             } catch {
-                self.errorHandler?(self, error)
+                await self.errorHandler?(self, error)
                 return
             }
 
@@ -573,7 +577,7 @@ public class XPCConnection: @unchecked Sendable {
             do {
                 try self.sendOnewayRawMessage(name: nil, body: response, key: MessageKeys.body, asReplyTo: event)
             } catch {
-                self.errorHandler?(self, error)
+                await self.errorHandler?(self, error)
             }
         }
     }
