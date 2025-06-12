@@ -171,11 +171,11 @@ public final class XPCListener {
     }
 
     /// A handler that will be called when a new connection activates.
-    public typealias ActivatedConnectionHandler = (XPCConnection) -> Void
+    public typealias ActivatedConnectionHandler = (XPCConnection) async -> Void
     public var activatedConnectionHandler: ActivatedConnectionHandler? = nil
 
     /// A handler that will be called when a connection cancels.
-    public typealias CanceledConnectionHandler = (XPCConnection) -> Void
+    public typealias CanceledConnectionHandler = (XPCConnection) async -> Void
     public var canceledConnectionHandler: CanceledConnectionHandler? = nil
 
     /// Create a new `XPCListener`.
@@ -228,12 +228,10 @@ public final class XPCListener {
                     newConnection.messageHandlers = self?.messageHandlers ?? [:]
                     newConnection.errorHandler = self?.errorHandler
                     newConnection.cancelHandler = {
-                        self?.canceledConnectionHandler?(newConnection)
+                        await self?.canceledConnectionHandler?(newConnection)
                     }
-
-                    newConnection.activate()
-
-                    self?.activatedConnectionHandler?(newConnection)
+                    await self?.activatedConnectionHandler?(newConnection)
+                    try await newConnection.activate()
                 } catch {
                     Task {
                         await self?.errorHandler?(connection, error)

@@ -137,7 +137,7 @@ public class XPCConnection: @unchecked Sendable {
     /// A handler that will be called when the connection is cancelled.
     public var cancelHandler: CancelHandler? = nil
 
-    internal var customEventHandler: xpc_handler_t? = nil
+    internal var customEventHandler: ((xpc_object_t) async -> Void)? = nil
 
     internal func getMessageHandler(forName name: String) -> MessageHandler.RawHandler? {
         switch name {
@@ -467,7 +467,9 @@ public class XPCConnection: @unchecked Sendable {
         }
 
         if let customEventHandler = self.customEventHandler {
-            customEventHandler(event)
+            Task {
+                await customEventHandler(event)
+            }
             return
         }
 
