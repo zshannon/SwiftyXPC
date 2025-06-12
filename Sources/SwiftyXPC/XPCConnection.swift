@@ -29,7 +29,7 @@ public class XPCConnection: @unchecked Sendable {
         static let body = "com.charlessoft.SwiftyXPC.XPCEventHandler.Body"
         static let error = "com.charlessoft.SwiftyXPC.XPCEventHandler.Error"
     }
-    
+
     private struct StateMessages {
         static let activate = "com.charlessoft.SwiftyXPC.XPCConnectionState.Activate"
         static let deactivate = "com.charlessoft.SwiftyXPC.XPCConnectionState.Deactivate"
@@ -47,9 +47,9 @@ public class XPCConnection: @unchecked Sendable {
 
     /// A handler that will be called if a communication error occurs.
     public typealias ErrorHandler = (XPCConnection, Swift.Error) -> Void
-    
+
     /// A handler that will be called when the connection is cancelled.
-    public typealias CancelHandler = () -> Void
+    public typealias CancelHandler = () async -> Void
 
     internal class MessageHandler {
         typealias RawHandler = ((XPCConnection, xpc_object_t) async throws -> xpc_object_t)
@@ -133,7 +133,7 @@ public class XPCConnection: @unchecked Sendable {
 
     /// A handler that will be called if a communication error occurs.
     public var errorHandler: ErrorHandler? = nil
-    
+
     /// A handler that will be called when the connection is cancelled.
     public var cancelHandler: CancelHandler? = nil
 
@@ -142,10 +142,11 @@ public class XPCConnection: @unchecked Sendable {
     internal func getMessageHandler(forName name: String) -> MessageHandler.RawHandler? {
         switch name {
         case StateMessages.activate: return { _, _ in try XPCEncoder().encode(XPCNull.shared) }
-        case StateMessages.deactivate: return { [cancelHandler] _, _ in
-            cancelHandler?()
-            return try XPCEncoder().encode(XPCNull.shared)
-        }
+        case StateMessages.deactivate:
+            return { [cancelHandler] _, _ in
+                await cancelHandler?()
+                return try XPCEncoder().encode(XPCNull.shared)
+            }
         default: return self.messageHandlers[name]?.closure
         }
     }
@@ -250,12 +251,12 @@ public class XPCConnection: @unchecked Sendable {
     /// Activate the connection.
     ///
     /// Connections start in an inactive state, so you must call `activate()` on a connection before it will send or receive any messages.
-    
+
     public func activate() async throws {
         xpc_connection_activate(self.connection)
         try await sendMessage(name: StateMessages.activate)
     }
-    
+
     public func activate() {
         xpc_connection_activate(self.connection)
     }
@@ -286,7 +287,7 @@ public class XPCConnection: @unchecked Sendable {
     public func cancel() {
         xpc_connection_cancel(self.connection)
     }
-    
+
     public func cancel() async throws {
         try await sendMessage(name: StateMessages.deactivate)
         xpc_connection_cancel(self.connection)
@@ -363,11 +364,12 @@ public class XPCConnection: @unchecked Sendable {
                         throw Error.missingMessageBody
                     }
 
-                    let response: Response = if Response.self == XPCNull.self {
-                        XPCNull() as! Response
-                    } else {
-                        try XPCDecoder().decode(type: Response.self, from: body)
-                    }
+                    let response: Response =
+                        if Response.self == XPCNull.self {
+                            XPCNull() as! Response
+                        } else {
+                            try XPCDecoder().decode(type: Response.self, from: body)
+                        }
 
                     continuation.resume(returning: response)
                 } catch {
